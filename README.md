@@ -1,10 +1,10 @@
-# 📚 Library Manager Pro v5.5
+# 📚 Library Manager Pro
 
 ![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)
 ![GUI Library](https://img.shields.io/badge/GUI-CustomTkinter-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-**Library Manager Pro** là một ứng dụng quản lý thư viện máy tính để bàn (Desktop App) được thiết kế hiện đại, tập trung vào trải nghiệm người dùng. Ứng dụng giúp số hóa việc quản lý sách, độc giả và các giao dịch mượn/trả một cách tự động và chính xác.
+**Library Manager** là một ứng dụng quản lý thư viện máy tính để bàn (Desktop App) được thiết kế hiện đại, tập trung vào trải nghiệm người dùng. Ứng dụng giúp số hóa việc quản lý sách, độc giả và các giao dịch mượn/trả một cách tự động và chính xác.
 
 ## 🚀 Tính năng chính
 
@@ -38,7 +38,7 @@ Dự án được cấu trúc theo mô hình phân lớp để dễ dàng bảo 
 2. **Cài đặt thư viện giao diện:**
    ```bash
    pip install customtkinter
-````
+    ````
 
 3.  **Chạy ứng dụng:**
     ```bash

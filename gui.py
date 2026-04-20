@@ -17,7 +17,7 @@ class LibraryGUI(ctk.CTk):
         để xử lý dữ liệu và vẽ bố cục (layout) ban đầu.
         """
         super().__init__()
-        self.title("THƯ VIỆN PRO v5.5 - In-Window Interface")
+        self.title("Library Manager - In-Window Interface")
         self.geometry("1100x700")
         self.manager = LibraryManager()
         
