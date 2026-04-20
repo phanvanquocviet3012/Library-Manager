@@ -64,13 +64,3 @@ Mọi ý tưởng đóng góp hoặc báo lỗi (issue) xin vui lòng gửi về
   - **Repo:** [Library-Manager](https://github.com/phanvanquocviet3012/Library-Manager)
 
 -----
-
-*Made with ❤️ for better library management.*
-
-```
-
-### Một số lưu ý cho bạn:
-- **Badge (Huy hiệu):** Mình có thêm các huy hiệu (Python version, License) ở đầu file để trông giống các dự án chuyên nghiệp trên GitHub.
-- **Cấu trúc:** File này mô tả rõ mô hình **MVC** mà bạn đang áp dụng (Manager - Model - GUI), giúp người xem đánh giá cao khả năng tổ chức code của bạn.
-- **License:** Nếu bạn muốn chia sẻ mã nguồn mở, hãy cân nhắc thêm file `LICENSE` (thường là MIT) vào repo nhé.
-```
