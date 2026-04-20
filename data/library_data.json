@@ -1,0 +1,128 @@
+{
+    "books": {
+        "001": {
+            "book_id": "001",
+            "title": "Lập trình căn bản",
+            "author": "Lê Nguyễn Hoàng Anh",
+            "category": "Chung",
+            "is_borrowed": false,
+            "due_date": null,
+            "borrower_id": null
+        },
+        "002": {
+            "book_id": "002",
+            "title": "Giáo Trình Phòng Ngự Trong Đá Bóng Cơ Bản",
+            "author": "Ngô Bá Duy",
+            "category": "Thể Thao",
+            "is_borrowed": true,
+            "due_date": "2026-05-04",
+            "borrower_id": "25522065"
+        }
+    },
+    "readers": {
+        "25522065": {
+            "reader_id": "25522065",
+            "name": "Phan Văn Quốc Việt",
+            "contact": "0977913815",
+            "max_books": 2,
+            "currently_borrowed": 1
+        }
+    },
+    "transactions": [
+        {
+            "reader_id": "25522065",
+            "book_id": "001",
+            "action": "Mượn",
+            "fine": 0,
+            "timestamp": "2026-04-20 19:11:27"
+        },
+        {
+            "reader_id": "25522065",
+            "book_id": "001",
+            "action": "Trả",
+            "fine": 0,
+            "timestamp": "2026-04-20 19:11:59"
+        },
+        {
+            "reader_id": "25522065",
+            "book_id": "001",
+            "action": "MƯỢN",
+            "fine": 0,
+            "timestamp": "2026-04-20 19:25:02"
+        },
+        {
+            "reader_id": "25522065",
+            "book_id": "001",
+            "action": "TRẢ",
+            "fine": 0,
+            "timestamp": "2026-04-20 19:25:46"
+        },
+        {
+            "reader_id": "25522065",
+            "book_id": "001",
+            "action": "MƯỢN",
+            "fine": 0,
+            "timestamp": "2026-04-20 19:38:42"
+        },
+        {
+            "reader_id": "25522065",
+            "book_id": "001",
+            "action": "TRẢ",
+            "fine": 0,
+            "timestamp": "2026-04-20 19:38:53"
+        },
+        {
+            "reader_id": "25522065",
+            "book_id": "001",
+            "action": "MƯỢN",
+            "fine": 0,
+            "timestamp": "2026-04-20 19:55:34"
+        },
+        {
+            "reader_id": "25522065",
+            "book_id": "001",
+            "action": "TRẢ",
+            "fine": 0,
+            "timestamp": "2026-04-20 19:57:45"
+        },
+        {
+            "reader_id": "25522065",
+            "book_id": "001",
+            "action": "MƯỢN",
+            "fine": 0,
+            "timestamp": "2026-04-20 19:58:45"
+        },
+        {
+            "reader_id": "25522065",
+            "book_id": "001",
+            "action": "TRẢ",
+            "fine": 0,
+            "timestamp": "2026-04-20 20:00:28"
+        },
+        {
+            "reader_id": "25522065",
+            "book_id": "001",
+            "action": "MƯỢN",
+            "fine": 0,
+            "timestamp": "2026-04-20 20:06:29"
+        },
+        {
+            "reader_id": "25522065",
+            "book_id": "002",
+            "action": "MƯỢN",
+            "fine": 0,
+            "timestamp": "2026-04-20 20:06:37"
+        },
+        {
+            "reader_id": "25522065",
+            "book_id": "001",
+            "action": "TRẢ",
+            "fine": 0,
+            "timestamp": "2026-04-20 20:07:01"
+        }
+    ],
+    "settings": {
+        "max_books": 2,
+        "fine_per_day": 5000
+    }
+}
