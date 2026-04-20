@@ -3,30 +3,46 @@ from tkinter import ttk, messagebox
 from library_manager import LibraryManager
 
 class LibraryGUI(ctk.CTk):
+    """
+    Lớp giao diện người dùng chính cho ứng dụng Quản lý Thư viện.
+
+    Sử dụng thư viện customtkinter để tạo giao diện hiện đại với cấu trúc 
+    Sidebar (thanh bên) điều hướng và Content Area (vùng nội dung) thay đổi linh hoạt.
+    """
     def __init__(self):
+        """
+        Khởi tạo cửa sổ ứng dụng và các thành phần giao diện cơ bản.
+
+        Thiết lập tiêu đề, kích thước cửa sổ, khởi tạo đối tượng LibraryManager 
+        để xử lý dữ liệu và vẽ bố cục (layout) ban đầu.
+        """
         super().__init__()
         self.title("THƯ VIỆN PRO v5.5 - In-Window Interface")
         self.geometry("1100x700")
         self.manager = LibraryManager()
         
-        # Khởi tạo biến lưu trữ trạng thái các checkbox khi trả sách
         self.return_check_vars = {}
 
         self.create_layout()
-        self.show_books_page() # Trang mặc định
+        self.show_books_page() 
 
     def create_layout(self):
+        """
+        Thiết lập bố cục khung (grid) cho toàn bộ ứng dụng.
+
+        Chia cửa sổ thành hai phần chính:
+        - Sidebar: Chứa logo và các nút điều hướng trang.
+        - Content: Khung chứa động để hiển thị nội dung của từng tính năng.
+        """
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        # Sidebar
         self.sidebar = ctk.CTkFrame(self, width=240, corner_radius=0)
         self.sidebar.grid(row=0, column=0, sticky="nsew")
         self.sidebar.grid_propagate(False)
 
         ctk.CTkLabel(self.sidebar, text="Library Manager", font=("Segoe UI", 22, "bold"), text_color="#1a73e8").pack(pady=(30, 40))
 
-        # Menu điều hướng
         menus = [
             ("📚 Kho Sách", self.show_books_page),
             ("👥 Độc Giả", self.show_readers_page),
@@ -42,32 +58,45 @@ class LibraryGUI(ctk.CTk):
                           fg_color="transparent", text_color=("gray10", "gray90"),
                           hover_color=("#ebebeb", "#323232")).pack(fill="x", padx=15, pady=5)
 
-        # Main Content Area
         self.content = ctk.CTkFrame(self, fg_color="transparent")
         self.content.grid(row=0, column=1, sticky="nsew", padx=30, pady=20)
 
     def clear_content(self):
-        """Xóa sạch nội dung hiện tại trong khung content để vẽ trang mới"""
+        """
+        Xóa sạch tất cả các widget hiện có trong khung nội dung (self.content).
+
+        Phương thức này được gọi mỗi khi người dùng chuyển trang để chuẩn bị 
+        không gian trống cho trang mới.
+        """
         for widget in self.content.winfo_children():
             widget.destroy()
 
     def create_header(self, title):
-        """Tạo tiêu đề cho mỗi trang"""
+        """
+        Tạo và hiển thị tiêu đề lớn cho trang hiện tại.
+
+        Args:
+            title (str): Nội dung tiêu đề cần hiển thị (ví dụ: "Quản Lý Kho Sách").
+        """
         self.title_lbl = ctk.CTkLabel(self.content, text=title, font=("Segoe UI", 28, "bold"))
         self.title_lbl.pack(anchor="w", pady=(0, 20))
 
-    # ================= CÁC TRANG HIỂN THỊ DỮ LIỆU =================
 
     def show_books_page(self):
+        """"
+        Hiển thị trang quản lý kho sách.
+
+        Trang này bao gồm:
+        - Thanh tìm kiếm thời gian thực.
+        - Bảng dữ liệu (Treeview) hiển thị ID, tên sách, tác giả và trạng thái.
+        """
         self.clear_content()
         self.create_header("Quản Lý Kho Sách")
         
-        # Thanh tìm kiếm
         self.search_entry = ctk.CTkEntry(self.content, placeholder_text="Tìm tên sách hoặc tác giả...", width=400, height=35)
         self.search_entry.pack(anchor="w", pady=(0, 15))
         self.search_entry.bind("<KeyRelease>", self.search_event)
 
-        # Bảng dữ liệu
         self.tree_frame = ctk.CTkFrame(self.content)
         self.tree_frame.pack(fill="both", expand=True)
         
@@ -80,6 +109,12 @@ class LibraryGUI(ctk.CTk):
         self.refresh_books()
 
     def show_readers_page(self):
+        """
+        Hiển thị trang danh sách độc giả.
+
+        Trang này hiển thị bảng thông tin về các độc giả đã đăng ký 
+        và số lượng sách họ đang mượn.
+        """
         self.clear_content()
         self.create_header("Danh Sách Độc Giả")
 
@@ -99,6 +134,15 @@ class LibraryGUI(ctk.CTk):
         self.refresh_readers()
 
     def search_event(self, event=None):
+        """
+        Xử lý sự kiện tìm kiếm khi người dùng nhập dữ liệu vào ô Search.
+
+        Dựa trên tiêu đề trang hiện tại, hàm sẽ gọi phương thức tìm kiếm tương ứng 
+        trong LibraryManager và cập nhật lại bảng dữ liệu (Treeview).
+
+        Args:
+            event (optional): Sự kiện phím bấm từ bàn phím.
+        """
         kw = self.search_entry.get().strip()
         current_page = self.title_lbl.cget("text")
         for i in self.tree.get_children(): self.tree.delete(i)
@@ -114,19 +158,25 @@ class LibraryGUI(ctk.CTk):
                 self.tree.insert("", "end", values=(r.reader_id, r.name, f"{r.currently_borrowed}/{r.max_books}"))
 
     def refresh_books(self):
+        """Tải lại toàn bộ danh sách sách từ LibraryManager lên bảng hiển thị."""
         for i in self.tree.get_children(): self.tree.delete(i)
         for b in self.manager.books.values():
             status = "🔴 Đã mượn" if b.is_borrowed else "🟢 Sẵn có"
             self.tree.insert("", "end", values=(b.book_id, b.title, b.author, status))
 
     def refresh_readers(self):
+        """Tải lại toàn bộ danh sách độc giả từ LibraryManager lên bảng hiển thị."""
         for i in self.tree.get_children(): self.tree.delete(i)
         for r in self.manager.readers.values():
             self.tree.insert("", "end", values=(r.reader_id, r.name, f"{r.currently_borrowed}/{r.max_books}"))
 
-    # ================= CÁC TRANG CHỨC NĂNG (FORM IN-WINDOW) =================
 
     def show_add_book_page(self):
+        """
+        Hiển thị form nhập liệu để thêm sách mới vào kho.
+
+        Bao gồm các trường nhập: ID, Tên, Tác giả, Thể loại và nút lưu dữ liệu.
+        """
         self.clear_content()
         self.create_header("Thêm Sách Mới")
         
@@ -153,6 +203,11 @@ class LibraryGUI(ctk.CTk):
         ctk.CTkButton(self.content, text="Lưu Thông Tin", command=save, width=200, height=40, fg_color="#1e8e3e").pack(anchor="w", pady=20)
 
     def show_add_reader_page(self):
+        """
+        Hiển thị form đăng ký độc giả mới.
+
+        Yêu cầu các thông tin: ID độc giả, Họ tên và Số điện thoại.
+        """
         self.clear_content()
         self.create_header("Đăng Ký Độc Giả")
 
@@ -176,6 +231,11 @@ class LibraryGUI(ctk.CTk):
         ctk.CTkButton(self.content, text="Xác Nhận Đăng Ký", command=save, width=200, height=40).pack(anchor="w", pady=20)
 
     def show_borrow_page(self):
+        """
+        Hiển thị giao diện cho phép mượn nhiều cuốn sách cùng lúc.
+
+        Người dùng nhập ID độc giả và danh sách mã sách (cách nhau bởi dấu phẩy).
+        """
         self.clear_content()
         self.create_header("Mượn Nhiều Sách")
 
@@ -198,10 +258,17 @@ class LibraryGUI(ctk.CTk):
         ctk.CTkButton(self.content, text="Thực Hiện Mượn", command=go, width=200, height=40, fg_color="#1a73e8").pack(anchor="w", pady=20)
 
     def show_return_page(self):
+        """
+        Hiển thị giao diện trả sách thông minh.
+
+        Quy trình:
+        1. Nhập mã độc giả và nhấn "Kiểm Tra".
+        2. Hệ thống liệt kê các sách độc giả đang mượn dưới dạng Checkbox.
+        3. Người dùng chọn sách muốn trả và nhấn "Xác Nhận".
+        """
         self.clear_content()
         self.create_header("Trả Nhiều Sách")
 
-        # Khung nhập liệu và nút tìm kiếm
         search_row = ctk.CTkFrame(self.content, fg_color="transparent")
         search_row.pack(anchor="w", pady=10)
 
@@ -241,8 +308,13 @@ class LibraryGUI(ctk.CTk):
 
         ctk.CTkButton(self.content, text="Xác Nhận Trả Sách", command=ok, width=200, height=40, fg_color="#1e8e3e").pack(anchor="w", pady=15)
 
-    # Kiểm tra trong file gui.py của bạn đã có hàm này chưa
     def show_settings_page(self):
+        """
+        Hiển thị trang cấu hình hệ thống.
+
+        Cho phép quản trị viên thay đổi giới hạn mượn sách và đơn giá phạt 
+        trên mỗi ngày quá hạn.
+        """
         self.clear_content()
         self.create_header("Cài Đặt Hệ Thống")
 
