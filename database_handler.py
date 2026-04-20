@@ -29,5 +29,5 @@ class DatabaseHandler:
                 transactions = [Transaction(**t) for t in data.get("transactions", [])]
                 settings = data.get("settings", default_settings)
                 return books, readers, transactions, settings
-        except:
+        except Exception:
             return {}, {}, [], default_settings

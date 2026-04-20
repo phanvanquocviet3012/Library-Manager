@@ -37,7 +37,3 @@ class Transaction:
 
     def to_dict(self):
         return self.__dict__
-
-    def __str__(self):
-        fine_str = f" | Phạt: {self.fine}đ" if self.fine > 0 else ""
-        return f"[{self.timestamp}] {self.action}: Độc giả {self.reader_id} - Sách {self.book_id}{fine_str}"

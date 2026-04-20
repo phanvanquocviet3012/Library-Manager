@@ -13,10 +13,10 @@
             "book_id": "002",
             "title": "Giáo Trình Phòng Ngự Trong Đá Bóng Cơ Bản",
             "author": "Ngô Bá Duy",
-            "category": "Thể Thao",
-            "is_borrowed": true,
-            "due_date": "2026-05-04",
-            "borrower_id": "25522065"
+            "category": "Chung",
+            "is_borrowed": false,
+            "due_date": null,
+            "borrower_id": null
         }
     },
     "readers": {
@@ -25,7 +25,14 @@
             "name": "Phan Văn Quốc Việt",
             "contact": "0977913815",
             "max_books": 2,
-            "currently_borrowed": 1
+            "currently_borrowed": 0
+        },
+        "25520078": {
+            "reader_id": "25520078",
+            "name": "Nguyễn Lưu Hải Anh",
+            "contact": "0977913815",
+            "max_books": 2,
+            "currently_borrowed": 0
         }
     },
     "transactions": [
@@ -119,6 +126,13 @@
             "action": "TRẢ",
             "fine": 0,
             "timestamp": "2026-04-20 20:07:01"
+        },
+        {
+            "reader_id": "25522065",
+            "book_id": "002",
+            "action": "TRẢ",
+            "fine": 0,
+            "timestamp": "2026-04-20 20:12:37"
         }
     ],
     "settings": {
