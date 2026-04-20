@@ -23,7 +23,6 @@ class LibraryManager:
         kw = kw.lower()
         return [b for b in self.books.values() if kw in b.title.lower() or kw in b.author.lower()]
     
-    # Thêm vào trong class LibraryManager
     def search_readers(self, kw):
         kw = kw.lower()
         return [r for r in self.readers.values() if kw in r.name.lower() or kw in r.reader_id.lower()]
@@ -56,6 +55,50 @@ class LibraryManager:
         self.transactions.append(Transaction(r_id, b_id, "TRẢ", fine=fine))
         self.save_all()
         return fine
+    
+    def borrow_multiple_books(self, r_id, b_ids_list):
+        """b_ids_list: danh sách các mã sách ['S1', 'S2']"""
+        results = []
+        reader = self.readers.get(r_id)
+        
+        if not reader:
+            return "❌ Mã độc giả không tồn tại."
+
+        for b_id in b_ids_list:
+            b_id = b_id.strip()
+            book = self.books.get(b_id)
+            
+            if not book:
+                results.append(f"❓ {b_id}: Không tìm thấy")
+                continue
+            if book.is_borrowed:
+                results.append(f"❌ {b_id}: Đã có người mượn")
+                continue
+            if not reader.can_borrow():
+                results.append(f"🚫 {b_id}: Đã đạt giới hạn mượn")
+                break # Dừng vì độc giả không mượn thêm được nữa
+            
+            # Tiến hành mượn
+            due = datetime.date.today() + datetime.timedelta(days=14)
+            book.is_borrowed, book.due_date, book.borrower_id = True, str(due), r_id
+            reader.currently_borrowed += 1
+            self.transactions.append(Transaction(r_id, b_id, "MƯỢN"))
+            results.append(f"✅ {book.title}: OK")
+
+        self.save_all()
+        return "\n".join(results)
+
+    def return_multiple_books(self, r_id, b_ids_list):
+        total_fine = 0
+        returned_titles = []
+        
+        for b_id in b_ids_list:
+            fine = self.return_book(r_id, b_id)
+            if fine is not None:
+                total_fine += fine
+                returned_titles.append(self.books[b_id].title)
+                
+        return returned_titles, total_fine
 
     def update_settings(self, max_b, fine):
         self.settings = {"max_books": max_b, "fine_per_day": fine}

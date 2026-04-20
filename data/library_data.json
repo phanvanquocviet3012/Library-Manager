@@ -133,6 +133,34 @@
             "action": "TRẢ",
             "fine": 0,
             "timestamp": "2026-04-20 20:12:37"
+        },
+        {
+            "reader_id": "25520078",
+            "book_id": "001",
+            "action": "MƯỢN",
+            "fine": 0,
+            "timestamp": "2026-04-20 21:31:43"
+        },
+        {
+            "reader_id": "25520078",
+            "book_id": "002",
+            "action": "MƯỢN",
+            "fine": 0,
+            "timestamp": "2026-04-20 21:31:43"
+        },
+        {
+            "reader_id": "25520078",
+            "book_id": "001",
+            "action": "TRẢ",
+            "fine": 0,
+            "timestamp": "2026-04-20 21:44:03"
+        },
+        {
+            "reader_id": "25520078",
+            "book_id": "002",
+            "action": "TRẢ",
+            "fine": 0,
+            "timestamp": "2026-04-20 21:44:03"
         }
     ],
     "settings": {
