@@ -219,3 +219,27 @@ class LibraryManager:
         for r in self.readers.values(): r.max_books = max_b
         self.save_all()
         return "✅ Đã cập nhật hệ thống."
+
+    def delete_book(self, b_id):
+        """Xóa sách khỏi hệ thống nếu sách chưa bị mượn."""
+        book = self.books.get(b_id)
+        if not book:
+            return False, "Không tìm thấy sách."
+        if book.is_borrowed:
+            return False, "Sách đang được mượn, không thể xóa. Hãy yêu cầu trả sách trước!"
+        
+        del self.books[b_id] # Xóa khỏi bộ nhớ
+        self.db.delete_book(b_id) # Xóa khỏi database SQLite
+        return True, "Xóa sách thành công."
+
+    def delete_reader(self, r_id):
+        """Xóa độc giả khỏi hệ thống nếu họ đã trả hết sách."""
+        reader = self.readers.get(r_id)
+        if not reader:
+            return False, "Không tìm thấy độc giả."
+        if reader.currently_borrowed > 0:
+            return False, "Độc giả này đang giữ sách thư viện, không thể xóa!"
+        
+        del self.readers[r_id] # Xóa khỏi bộ nhớ
+        self.db.delete_reader(r_id) # Xóa khỏi database SQLite
+        return True, "Xóa độc giả thành công."

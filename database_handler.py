@@ -1,77 +1,136 @@
-import json
+import sqlite3
 import os
 from models import Book, Reader, Transaction
 
 class DatabaseHandler:
-    """
-    Lớp xử lý việc lưu trữ và truy xuất dữ liệu từ file hệ thống.
+    def __init__(self, db_path="data/library.db"):
+        self.db_path = db_path
+        os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
+        self._create_tables()
 
-    DatabaseHandler chịu trách nhiệm quản lý việc đọc/ghi dữ liệu vào file JSON,
-    đảm bảo thư mục lưu trữ luôn tồn tại và xử lý các tình huống file không hợp lệ 
-    để tránh làm hỏng luồng chạy của chương trình.
-    """
-    def __init__(self, file_path="data/library_data.json"):
-        """
-        Khởi tạo bộ xử lý cơ sở dữ liệu.
+    def _get_connection(self):
+        """Tạo kết nối tới SQLite và trả về đối tượng connection."""
+        conn = sqlite3.connect(self.db_path)
+        conn.row_factory = sqlite3.Row  # Truy xuất dữ liệu theo tên cột
+        return conn
 
-        Args:
-            file_path (str, optional): Đường dẫn đến file JSON dùng để lưu trữ dữ liệu. 
-                Mặc định là "data/library_data.json".
-
-        Note:
-            Hàm khởi tạo sẽ tự động kiểm tra và tạo thư mục chứa file nếu thư mục đó 
-            chưa tồn tại trên hệ thống.
-        """
-        self.file_path = file_path
-        os.makedirs(os.path.dirname(self.file_path), exist_ok=True)
+    def _create_tables(self):
+        """Khởi tạo cấu trúc bảng nếu chưa có, bám sát các thuộc tính trong models.py."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # Bảng Sách
+            cursor.execute('''CREATE TABLE IF NOT EXISTS books (
+                                book_id TEXT PRIMARY KEY, 
+                                title TEXT, 
+                                author TEXT, 
+                                category TEXT,
+                                is_borrowed INTEGER,
+                                due_date TEXT,
+                                borrower_id TEXT)''')
+            
+            # Bảng Độc giả
+            cursor.execute('''CREATE TABLE IF NOT EXISTS readers (
+                                reader_id TEXT PRIMARY KEY, 
+                                name TEXT, 
+                                contact TEXT,
+                                max_books INTEGER,
+                                currently_borrowed INTEGER)''')
+            
+            # Bảng Giao dịch
+            cursor.execute('''CREATE TABLE IF NOT EXISTS transactions (
+                                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                reader_id TEXT,
+                                book_id TEXT,
+                                action TEXT,
+                                fine INTEGER,
+                                timestamp TEXT)''')
+            
+            # Bảng Cài đặt
+            cursor.execute('''CREATE TABLE IF NOT EXISTS settings (
+                                key TEXT PRIMARY KEY, 
+                                value TEXT)''')
+            conn.commit()
 
     def save(self, books, readers, transactions, settings):
-        """
-        Chuyển đổi các đối tượng Python thành định dạng JSON và ghi xuống đĩa cứng.
+        """Lưu toàn bộ trạng thái dữ liệu hiện tại vào SQLite."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # Lưu Sách
+            for b_id, book in books.items():
+                cursor.execute("""
+                    REPLACE INTO books (book_id, title, author, category, is_borrowed, due_date, borrower_id) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, (book.book_id, book.title, book.author, book.category, 
+                      int(book.is_borrowed), book.due_date, book.borrower_id))
+            
+            # Lưu Độc giả
+            for r_id, reader in readers.items():
+                cursor.execute("""
+                    REPLACE INTO readers (reader_id, name, contact, max_books, currently_borrowed) 
+                    VALUES (?, ?, ?, ?, ?)
+                """, (reader.reader_id, reader.name, reader.contact, reader.max_books, reader.currently_borrowed))
+            
+            # Lưu Giao dịch (Xóa cũ đi ghi lại để tránh bị nhân đôi dữ liệu mỗi lần save)
+            cursor.execute("DELETE FROM transactions")
+            for t in transactions:
+                cursor.execute("""
+                    INSERT INTO transactions (reader_id, book_id, action, fine, timestamp) 
+                    VALUES (?, ?, ?, ?, ?)
+                """, (t.reader_id, t.book_id, t.action, t.fine, t.timestamp))
 
-        Phương thức này thực hiện tuần tự hóa (serialization) các đối tượng Book, 
-        Reader và Transaction thông qua phương thức `to_dict()` của chúng.
-
-        Args:
-            books (dict): Dictionary chứa các đối tượng Book.
-            readers (dict): Dictionary chứa các đối tượng Reader.
-            transactions (list): Danh sách các đối tượng Transaction.
-            settings (dict): Dictionary chứa các cấu hình hệ thống (giới hạn mượn, tiền phạt).
-        """
-        data = {
-            "books": {k: v.to_dict() for k, v in books.items()},
-            "readers": {k: v.to_dict() for k, v in readers.items()},
-            "transactions": [t.to_dict() for t in transactions],
-            "settings": settings
-        }
-        with open(self.file_path, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=4)
+            # Lưu Cài đặt
+            for key, value in settings.items():
+                cursor.execute("REPLACE INTO settings (key, value) VALUES (?, ?)", (key, str(value)))
+            
+            conn.commit()
 
     def load(self):
-        """
-        Đọc dữ liệu từ file JSON và tái tạo lại các đối tượng Python tương ứng.
-
-        Thực hiện quá trình giải tuần tự hóa (deserialization). Nếu file không tồn tại 
-        hoặc dữ liệu bị lỗi, hàm sẽ trả về các cấu trúc dữ liệu rỗng và cài đặt mặc định 
-        để ứng dụng có thể tiếp tục khởi động.
-
-        Returns:
-            tuple: Trả về một tuple gồm 4 thành phần:
-                - books (dict): Dictionary chứa các đối tượng Book được tạo từ dữ liệu file.
-                - readers (dict): Dictionary chứa các đối tượng Reader được tạo từ dữ liệu file.
-                - transactions (list): Danh sách các đối tượng Transaction.
-                - settings (dict): Cấu hình hệ thống hiện tại.
-        """
-        default_settings = {"max_books": 5, "fine_per_day": 5000}
-        if not os.path.exists(self.file_path): 
-            return {}, {}, [], default_settings
+        """Đọc dữ liệu từ SQLite và khởi tạo lại các object Python."""
         try:
-            with open(self.file_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                books = {k: Book(**v) for k, v in data.get("books", {}).items()}
-                readers = {k: Reader(**v) for k, v in data.get("readers", {}).items()}
-                transactions = [Transaction(**t) for t in data.get("transactions", [])]
-                settings = data.get("settings", default_settings)
+            with self._get_connection() as conn:
+                cursor = conn.cursor()
+                
+                # Load Books
+                cursor.execute("SELECT * FROM books")
+                books = {}
+                for row in cursor.fetchall():
+                    row_dict = dict(row)
+                    row_dict['is_borrowed'] = bool(row_dict['is_borrowed']) # Ép kiểu lại thành boolean
+                    books[row_dict['book_id']] = Book(**row_dict)
+                
+                # Load Readers
+                cursor.execute("SELECT * FROM readers")
+                readers = {row['reader_id']: Reader(**dict(row)) for row in cursor.fetchall()}
+                
+                # Load Transactions (Không load cột id tự tăng của SQL vào class)
+                cursor.execute("SELECT reader_id, book_id, action, fine, timestamp FROM transactions")
+                transactions = [Transaction(**dict(row)) for row in cursor.fetchall()]
+                
+                # Load Settings
+                cursor.execute("SELECT * FROM settings")
+                settings = {row['key']: (int(row['value']) if row['value'].isdigit() else row['value']) 
+                            for row in cursor.fetchall()}
+                
+                if not settings:
+                    settings = {"max_books": 5, "fine_per_day": 5000}
+                    
                 return books, readers, transactions, settings
-        except Exception:
-            return {}, {}, [], default_settings
+        except Exception as e:
+            print(f"Lỗi khi load DB: {e}")
+            return {}, {}, [], {"max_books": 5, "fine_per_day": 5000}
+
+    def delete_book(self, book_id):
+        """Xóa một cuốn sách khỏi database."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM books WHERE book_id = ?", (book_id,))
+            conn.commit()
+
+    def delete_reader(self, reader_id):
+        """Xóa một độc giả khỏi database."""
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM readers WHERE reader_id = ?", (reader_id,))
+            conn.commit()

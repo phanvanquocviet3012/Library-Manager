@@ -107,6 +107,31 @@ class LibraryGUI(ctk.CTk):
         
         self.tree.pack(side="left", fill="both", expand=True)
         self.refresh_books()
+        # Thêm khu vực chứa nút xóa sách
+        btn_frame = ctk.CTkFrame(self.content, fg_color="transparent")
+        btn_frame.pack(fill="x", pady=10)
+        
+        def delete_selected_book():
+            selected_item = self.tree.selection()
+            if not selected_item:
+                messagebox.showwarning("Chú ý", "Vui lòng chọn một cuốn sách trong bảng để xóa!")
+                return
+            
+            # Lấy ID sách từ dòng được chọn
+            b_id = selected_item[0] 
+            
+            confirm = messagebox.askyesno("Xác nhận", f"Bạn có chắc chắn muốn xóa sách ID: {b_id}?")
+            if confirm:
+                success, msg = self.manager.delete_book(str(b_id))
+                if success:
+                    messagebox.showinfo("Thành công", msg)
+                    self.refresh_books() # Cập nhật lại bảng
+                else:
+                    messagebox.showerror("Lỗi", msg)
+
+        # Nút bấm màu đỏ để báo hiệu hành động xóa nguy hiểm
+        ctk.CTkButton(btn_frame, text="🗑️ Xóa Sách Đã Chọn", command=delete_selected_book, 
+                      fg_color="#d32f2f", hover_color="#b71c1c").pack(side="right")
 
     def show_readers_page(self):
         """
@@ -132,6 +157,29 @@ class LibraryGUI(ctk.CTk):
         
         self.tree.pack(side="left", fill="both", expand=True)
         self.refresh_readers()
+        # Thêm khu vực chứa nút xóa độc giả
+        btn_frame = ctk.CTkFrame(self.content, fg_color="transparent")
+        btn_frame.pack(fill="x", pady=10)
+        
+        def delete_selected_reader():
+            selected_item = self.tree.selection()
+            if not selected_item:
+                messagebox.showwarning("Chú ý", "Vui lòng chọn một độc giả trong bảng để xóa!")
+                return
+            
+            r_id = selected_item[0]
+            
+            confirm = messagebox.askyesno("Xác nhận", f"Bạn có chắc muốn xóa độc giả ID: {r_id}?")
+            if confirm:
+                success, msg = self.manager.delete_reader(str(r_id))
+                if success:
+                    messagebox.showinfo("Thành công", msg)
+                    self.refresh_readers()
+                else:
+                    messagebox.showerror("Lỗi", msg)
+
+        ctk.CTkButton(btn_frame, text="🗑️ Xóa Độc Giả Đã Chọn", command=delete_selected_reader, 
+                      fg_color="#d32f2f", hover_color="#b71c1c").pack(side="right")
 
     def search_event(self, event=None):
         """
@@ -151,24 +199,24 @@ class LibraryGUI(ctk.CTk):
             results = self.manager.search_books(kw)
             for b in results:
                 status = "🔴 Đã mượn" if b.is_borrowed else "🟢 Sẵn có"
-                self.tree.insert("", "end", values=(b.book_id, b.title, b.author, status))
+                self.tree.insert("", "end", iid=b.book_id, values=(b.book_id, b.title, b.author, status))
         elif current_page == "Danh Sách Độc Giả":
             results = self.manager.search_readers(kw)
             for r in results:
-                self.tree.insert("", "end", values=(r.reader_id, r.name, f"{r.currently_borrowed}/{r.max_books}"))
+                self.tree.insert("", "end", iid=r.reader_id, values=(r.reader_id, r.name, f"{r.currently_borrowed}/{r.max_books}"))
 
     def refresh_books(self):
         """Tải lại toàn bộ danh sách sách từ LibraryManager lên bảng hiển thị."""
         for i in self.tree.get_children(): self.tree.delete(i)
         for b in self.manager.books.values():
             status = "🔴 Đã mượn" if b.is_borrowed else "🟢 Sẵn có"
-            self.tree.insert("", "end", values=(b.book_id, b.title, b.author, status))
+            self.tree.insert("", "end", iid=b.book_id, values=(b.book_id, b.title, b.author, status))
 
     def refresh_readers(self):
         """Tải lại toàn bộ danh sách độc giả từ LibraryManager lên bảng hiển thị."""
         for i in self.tree.get_children(): self.tree.delete(i)
         for r in self.manager.readers.values():
-            self.tree.insert("", "end", values=(r.reader_id, r.name, f"{r.currently_borrowed}/{r.max_books}"))
+            self.tree.insert("", "end", iid=r.reader_id, values=(r.reader_id, r.name, f"{r.currently_borrowed}/{r.max_books}"))
 
 
     def show_add_book_page(self):
@@ -185,13 +233,8 @@ class LibraryGUI(ctk.CTk):
 
         fields = ["Mã Sách (ID)", "Tên Sách", "Tác Giả", "Thể Loại"]
         entries = {}
-        for f in fields:
-            ctk.CTkLabel(form, text=f, font=("Segoe UI", 14)).pack(anchor="w", pady=(10, 2))
-            e = ctk.CTkEntry(form, width=400, height=35)
-            e.pack(anchor="w", pady=5)
-            entries[f] = e
 
-        def save():
+        def save(event=None):
             if not entries["Mã Sách (ID)"].get() or not entries["Tên Sách"].get():
                 messagebox.showwarning("Lỗi", "Vui lòng nhập ID và Tên sách!")
                 return
@@ -199,6 +242,13 @@ class LibraryGUI(ctk.CTk):
                                   entries["Tác Giả"].get(), entries["Thể Loại"].get())
             messagebox.showinfo("Thành công", "Đã thêm sách vào kho.")
             self.show_books_page()
+
+        for f in fields:
+            ctk.CTkLabel(form, text=f, font=("Segoe UI", 14)).pack(anchor="w", pady=(10, 2))
+            e = ctk.CTkEntry(form, width=400, height=35)
+            e.pack(anchor="w", pady=5)
+            e.bind("<Return>", save) 
+            entries[f] = e
 
         ctk.CTkButton(self.content, text="Lưu Thông Tin", command=save, width=200, height=40, fg_color="#1e8e3e").pack(anchor="w", pady=20)
 
@@ -223,10 +273,31 @@ class LibraryGUI(ctk.CTk):
         ctk.CTkLabel(form, text="Số Điện Thoại").pack(anchor="w", pady=(10, 2))
         e_phone = ctk.CTkEntry(form, width=400, height=35); e_phone.pack(pady=5)
 
-        def save():
-            self.manager.add_reader(e_id.get(), e_name.get(), e_phone.get())
+        def save(event=None):
+            r_id = e_id.get().strip()
+            name = e_name.get().strip()
+            phone = e_phone.get().strip()
+
+            if not r_id:
+                messagebox.showwarning("Thiếu thông tin", "Vui lòng nhập Mã Độc Giả!")
+                e_id.focus()
+                return
+            if not name:
+                messagebox.showwarning("Thiếu thông tin", "Vui lòng nhập Họ và Tên độc giả!")
+                e_name.focus()
+                return
+            if not phone:
+                messagebox.showwarning("Thiếu thông tin", "Vui lòng nhập Số điện thoại!")
+                e_phone.focus()
+                return
+
+            self.manager.add_reader(r_id, name, phone)
             messagebox.showinfo("Thành công", "Đã đăng ký độc giả mới.")
             self.show_readers_page()
+
+        e_id.bind("<Return>", save)
+        e_name.bind("<Return>", save)
+        e_phone.bind("<Return>", save)
 
         ctk.CTkButton(self.content, text="Xác Nhận Đăng Ký", command=save, width=200, height=40).pack(anchor="w", pady=20)
 
@@ -245,15 +316,31 @@ class LibraryGUI(ctk.CTk):
         ctk.CTkLabel(self.content, text="ID Sách (Nhập nhiều mã, cách nhau bằng dấu phẩy):").pack(anchor="w", pady=(15, 2))
         e_b = ctk.CTkTextbox(self.content, width=500, height=150); e_b.pack(anchor="w", pady=5)
 
-        def go():
+        def go(event=None):
             r_id = e_r.get().strip()
-            b_ids = [i.strip() for i in e_b.get("1.0", "end").strip().split(",") if i.strip()]
-            if not r_id or not b_ids:
-                messagebox.showwarning("Lỗi", "Hãy nhập đủ mã độc giả và mã sách!")
+            raw_b_ids = e_b.get("1.0", "end").strip()
+            b_ids = [i.strip() for i in raw_b_ids.split(",") if i.strip()]
+
+            if not r_id:
+                messagebox.showwarning("Thiếu thông tin", "Vui lòng nhập ID Độc Giả thực hiện mượn!")
+                e_r.focus()
                 return
+            
+            if not b_ids:
+                messagebox.showwarning("Thiếu thông tin", "Vui lòng nhập ít nhất một Mã Sách để mượn!")
+                e_b.focus()
+                return
+
             msg = self.manager.borrow_multiple_books(r_id, b_ids)
             messagebox.showinfo("Kết quả", msg)
             self.show_books_page()
+
+        e_r.bind("<Return>", go)
+        
+        def on_enter_textbox(event):
+            go()
+            return "break"
+        e_b.bind("<Return>", on_enter_textbox)
 
         ctk.CTkButton(self.content, text="Thực Hiện Mượn", command=go, width=200, height=40, fg_color="#1a73e8").pack(anchor="w", pady=20)
 
