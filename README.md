@@ -20,14 +20,14 @@
 
 ### 3. Hệ thống & Lưu trữ
 * **Cài đặt:** Tùy chỉnh mức phạt mỗi ngày và giới hạn mượn ngay trên giao diện.
-* **Cơ sở dữ liệu:** Lưu trữ dưới dạng JSON, đảm bảo dữ liệu không bị mất khi tắt ứng dụng.
+* **Cơ sở dữ liệu:** Lưu trữ dưới dạng file .db và sử dụng SQLite để quản lý dữ liệu.
 
 ## 🛠 Kiến trúc dự án (MVC Pattern)
 
 Dự án được cấu trúc theo mô hình phân lớp để dễ dàng bảo trì:
 
 * `models.py`: Định nghĩa cấu trúc dữ liệu (Book, Reader, Transaction).
-* `database_handler.py`: Tầng truy cập dữ liệu (Data Access Layer) xử lý file JSON.
+* `database_handler.py`: Tầng xử lý dữ liệu (Data Access Layer) xử lý file .db.
 * `library_manager.py`: Tầng điều phối (Controller) xử lý logic nghiệp vụ.
 * `gui.py`: Giao diện người dùng (View) xây dựng bằng CustomTkinter.
 * `main.py`: Điểm khởi chạy ứng dụng (Entry point).
