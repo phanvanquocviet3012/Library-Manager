@@ -1,4 +1,4 @@
-# 📚 Library Manager Pro
+# 📚 Library Manager
 
 ![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)
 ![GUI Library](https://img.shields.io/badge/GUI-CustomTkinter-orange)
