@@ -1,6 +1,7 @@
 import customtkinter as ctk
 from tkinter import ttk, messagebox
 from library_manager import LibraryManager
+import datetime
 
 class LibraryGUI(ctk.CTk):
     """
@@ -46,6 +47,7 @@ class LibraryGUI(ctk.CTk):
         menus = [
             ("📚 Kho Sách", self.show_books_page),
             ("👥 Độc Giả", self.show_readers_page),
+            ("📜 Lịch Sử Giao Dịch", self.show_transactions_page),
             ("➕ Thêm Sách", self.show_add_book_page),
             ("👤 Thêm Độc Giả", self.show_add_reader_page),
             ("📤 Mượn Sách", self.show_borrow_page),
@@ -103,10 +105,16 @@ class LibraryGUI(ctk.CTk):
         self.tree = ttk.Treeview(self.tree_frame, columns=("id", "title", "author", "status"), show="headings")
         for c, h in zip(self.tree["columns"], ["ID", "Tên Sách", "Tác Giả", "Trạng Thái"]):
             self.tree.heading(c, text=h)
-            self.tree.column(c, width=150, anchor="center")
+            self.tree.column(c, width=170, anchor="center") # Tăng width một chút để hiển thị đủ chữ
+        
+        # Cấu hình màu chữ (tags) cho Treeview để làm nổi bật cảnh báo
+        self.tree.tag_configure("overdue", foreground="#d32f2f") # Màu đỏ cho quá hạn
+        self.tree.tag_configure("nearing", foreground="#e67e22") # Màu cam cho sắp hết hạn
+        self.tree.tag_configure("normal", foreground="#1e8e3e")  # Màu xanh cho sẵn có
         
         self.tree.pack(side="left", fill="both", expand=True)
         self.refresh_books()
+        
         # Thêm khu vực chứa nút xóa sách
         btn_frame = ctk.CTkFrame(self.content, fg_color="transparent")
         btn_frame.pack(fill="x", pady=10)
@@ -117,7 +125,6 @@ class LibraryGUI(ctk.CTk):
                 messagebox.showwarning("Chú ý", "Vui lòng chọn một cuốn sách trong bảng để xóa!")
                 return
             
-            # Lấy ID sách từ dòng được chọn
             b_id = selected_item[0] 
             
             confirm = messagebox.askyesno("Xác nhận", f"Bạn có chắc chắn muốn xóa sách ID: {b_id}?")
@@ -125,11 +132,10 @@ class LibraryGUI(ctk.CTk):
                 success, msg = self.manager.delete_book(str(b_id))
                 if success:
                     messagebox.showinfo("Thành công", msg)
-                    self.refresh_books() # Cập nhật lại bảng
+                    self.refresh_books() 
                 else:
                     messagebox.showerror("Lỗi", msg)
 
-        # Nút bấm màu đỏ để báo hiệu hành động xóa nguy hiểm
         ctk.CTkButton(btn_frame, text="🗑️ Xóa Sách Đã Chọn", command=delete_selected_book, 
                       fg_color="#d32f2f", hover_color="#b71c1c").pack(side="right")
 
@@ -181,6 +187,26 @@ class LibraryGUI(ctk.CTk):
         ctk.CTkButton(btn_frame, text="🗑️ Xóa Độc Giả Đã Chọn", command=delete_selected_reader, 
                       fg_color="#d32f2f", hover_color="#b71c1c").pack(side="right")
 
+    def get_book_display_info(self, b):
+        """
+        Hàm phụ trợ phân loại và tính trạng thái hiển thị của một cuốn sách.
+        """
+        if not b.is_borrowed or not b.due_date:
+            return (3, "🟢 Sẵn có", "normal")
+        try:
+            today = datetime.date.today()
+            due_date = datetime.datetime.strptime(b.due_date, "%Y-%m-%d").date()
+            days_left = (due_date - today).days
+
+            if days_left < 0:
+                return (0, f"❌ Quá hạn ({-days_left} ngày)", "overdue")
+            elif days_left <= 3:
+                return (1, f"⚠️ Sắp hết hạn ({days_left} ngày)", "nearing")
+            else:
+                return (2, f"🔴 Đã mượn (còn {days_left} ngày)", "")
+        except Exception:
+            return (2, "🔴 Đã mượn", "")
+
     def search_event(self, event=None):
         """
         Xử lý sự kiện tìm kiếm khi người dùng nhập dữ liệu vào ô Search.
@@ -191,32 +217,87 @@ class LibraryGUI(ctk.CTk):
         Args:
             event (optional): Sự kiện phím bấm từ bàn phím.
         """
-        kw = self.search_entry.get().strip()
+        kw = self.search_entry.get().strip().lower()
         current_page = self.title_lbl.cget("text")
         for i in self.tree.get_children(): self.tree.delete(i)
 
         if current_page == "Quản Lý Kho Sách":
             results = self.manager.search_books(kw)
+            # Gom dữ liệu và tính toán độ ưu tiên
+            processed = []
             for b in results:
-                status = "🔴 Đã mượn" if b.is_borrowed else "🟢 Sẵn có"
-                self.tree.insert("", "end", iid=b.book_id, values=(b.book_id, b.title, b.author, status))
+                priority, status, tag = self.get_book_display_info(b)
+                processed.append((priority, status, tag, b))
+            
+            # Sắp xếp để sách quá hạn / sắp hết hạn trồi lên đầu
+            processed.sort(key=lambda x: x[0])
+            
+            for priority, status, tag, b in processed:
+                self.tree.insert("", "end", iid=b.book_id, values=(b.book_id, b.title, b.author, status), tags=(tag,))
+                
         elif current_page == "Danh Sách Độc Giả":
             results = self.manager.search_readers(kw)
             for r in results:
                 self.tree.insert("", "end", iid=r.reader_id, values=(r.reader_id, r.name, f"{r.currently_borrowed}/{r.max_books}"))
+        
+        elif current_page == "Lịch Sử Giao Dịch":
+            for t in reversed(self.manager.transactions):
+                if kw in t.reader_id.lower() or kw in t.book_id.lower():
+                    fine_str = f"{t.fine:,.0f} đ" if t.fine > 0 else "-"
+                    self.tree.insert("", "end", values=(t.timestamp, t.reader_id, t.book_id, t.action, fine_str))
 
     def refresh_books(self):
         """Tải lại toàn bộ danh sách sách từ LibraryManager lên bảng hiển thị."""
         for i in self.tree.get_children(): self.tree.delete(i)
+        
+        processed = []
         for b in self.manager.books.values():
-            status = "🔴 Đã mượn" if b.is_borrowed else "🟢 Sẵn có"
-            self.tree.insert("", "end", iid=b.book_id, values=(b.book_id, b.title, b.author, status))
+            priority, status, tag = self.get_book_display_info(b)
+            processed.append((priority, status, tag, b))
+        
+        # Sắp xếp dữ liệu dựa vào priority (0, 1, 2, 3)
+        processed.sort(key=lambda x: x[0])
+        
+        for priority, status, tag, b in processed:
+            self.tree.insert("", "end", iid=b.book_id, values=(b.book_id, b.title, b.author, status), tags=(tag,))
 
     def refresh_readers(self):
         """Tải lại toàn bộ danh sách độc giả từ LibraryManager lên bảng hiển thị."""
         for i in self.tree.get_children(): self.tree.delete(i)
         for r in self.manager.readers.values():
             self.tree.insert("", "end", iid=r.reader_id, values=(r.reader_id, r.name, f"{r.currently_borrowed}/{r.max_books}"))
+
+
+    def show_transactions_page(self):
+        """Hiển thị trang lịch sử mượn/trả sách."""
+        self.clear_content()
+        self.create_header("Lịch Sử Giao Dịch")
+
+        # Ô tìm kiếm
+        self.search_entry = ctk.CTkEntry(self.content, placeholder_text="Tìm mã độc giả hoặc mã sách...", width=400, height=35)
+        self.search_entry.pack(anchor="w", pady=(0, 15))
+        self.search_entry.bind("<KeyRelease>", self.search_event)
+
+        # Khung chứa bảng
+        self.tree_frame = ctk.CTkFrame(self.content)
+        self.tree_frame.pack(fill="both", expand=True)
+
+        self.tree = ttk.Treeview(self.tree_frame, columns=("time", "reader", "book", "action", "fine"), show="headings")
+        for c, h in zip(self.tree["columns"], ["Thời Gian", "Mã Độc Giả", "Mã Sách", "Hành Động", "Tiền Phạt"]):
+            self.tree.heading(c, text=h)
+            self.tree.column(c, width=150, anchor="center")
+        
+        self.tree.pack(side="left", fill="both", expand=True)
+        self.refresh_transactions()
+
+    def refresh_transactions(self):
+        """Tải dữ liệu giao dịch lên bảng, mới nhất xếp lên đầu."""
+        for i in self.tree.get_children(): self.tree.delete(i)
+        
+        # Đảo ngược danh sách (reversed) để giao dịch mới nhất lên đầu
+        for t in reversed(self.manager.transactions):
+            fine_str = f"{t.fine:,.0f} đ" if t.fine > 0 else "-"
+            self.tree.insert("", "end", values=(t.timestamp, t.reader_id, t.book_id, t.action, fine_str))
 
 
     def show_add_book_page(self):
@@ -415,11 +496,19 @@ class LibraryGUI(ctk.CTk):
         e_f.insert(0, str(self.manager.settings["fine_per_day"]))
         e_f.pack(anchor="w", pady=5)
 
+        ctk.CTkLabel(self.content, text="Số ngày mượn cho phép (ngày):").pack(anchor="w", pady=(10, 2))
+        e_d = ctk.CTkEntry(self.content, width=200)
+        e_d.insert(0, str(self.manager.settings.get("borrow_days", 14)))
+        e_d.pack(anchor="w", pady=5)
+
         def save():
             try:
                 max_b = int(e_m.get() or 5)
                 fine = int(e_f.get() or 5000)
-                self.manager.update_settings(max_b, fine)
+                days = int(e_d.get() or 14) # Lấy dữ liệu ngày
+                
+                # Truyền đủ 3 tham số vào manager
+                self.manager.update_settings(max_b, fine, days) 
                 messagebox.showinfo("Cài đặt", "Đã cập nhật hệ thống thành công.")
                 self.show_books_page()
             except ValueError:

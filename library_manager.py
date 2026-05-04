@@ -20,6 +20,7 @@ class LibraryManager:
         self.db = DatabaseHandler()
         self.books, self.readers, self.transactions, self.settings = self.db.load()
         self.fine_per_day = self.settings.get("fine_per_day", 5000)
+        self.borrow_days = self.settings.get("borrow_days", 14)
 
     def save_all(self):
         """
@@ -100,7 +101,7 @@ class LibraryManager:
         if book.is_borrowed: return "❌ Sách đã có người mượn."
         if not reader.can_borrow(): return "❌ Đạt giới hạn mượn."
 
-        due = datetime.date.today() + datetime.timedelta(days=14)
+        due = datetime.date.today() + datetime.timedelta(days=self.borrow_days)
         book.is_borrowed, book.due_date, book.borrower_id = True, str(due), r_id
         reader.currently_borrowed += 1
         self.transactions.append(Transaction(r_id, b_id, "MƯỢN"))
@@ -168,7 +169,7 @@ class LibraryManager:
                 break # Dừng vì độc giả không mượn thêm được nữa
             
             # Tiến hành mượn
-            due = datetime.date.today() + datetime.timedelta(days=14)
+            due = datetime.date.today() + datetime.timedelta(days=self.borrow_days                                                                                                              )
             book.is_borrowed, book.due_date, book.borrower_id = True, str(due), r_id
             reader.currently_borrowed += 1
             self.transactions.append(Transaction(r_id, b_id, "MƯỢN"))
@@ -201,7 +202,7 @@ class LibraryManager:
                 
         return returned_titles, total_fine
 
-    def update_settings(self, max_b, fine):
+    def update_settings(self, max_b, fine, borrow_days):
         """
         Cập nhật cấu hình toàn hệ thống về giới hạn mượn và đơn giá phạt.
 
@@ -210,12 +211,14 @@ class LibraryManager:
         Args:
             max_b (int): Giới hạn số lượng sách mượn mới.
             fine (int): Số tiền phạt mới cho mỗi ngày quá hạn.
+            borrow_days (int): Số ngày được mượn sách.
 
         Returns:
             str: Thông báo xác nhận cập nhật thành công.
         """
-        self.settings = {"max_books": max_b, "fine_per_day": fine}
+        self.settings = {"max_books": max_b, "fine_per_day": fine, "borrow_days": borrow_days}
         self.fine_per_day = fine
+        self.borrow_days = borrow_days
         for r in self.readers.values(): r.max_books = max_b
         self.save_all()
         return "✅ Đã cập nhật hệ thống."

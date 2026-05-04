@@ -114,12 +114,14 @@ class DatabaseHandler:
                             for row in cursor.fetchall()}
                 
                 if not settings:
-                    settings = {"max_books": 5, "fine_per_day": 5000}
+                    settings = {"max_books": 5, "fine_per_day": 5000, "borrow_days": 14}
+                elif "borrow_days" not in settings: # Trường hợp user cũ đã có db nhưng chưa có key này
+                    settings["borrow_days"] = 14
                     
                 return books, readers, transactions, settings
         except Exception as e:
             print(f"Lỗi khi load DB: {e}")
-            return {}, {}, [], {"max_books": 5, "fine_per_day": 5000}
+            return {}, {}, [], {"max_books": 5, "fine_per_day": 5000, "borrow_days": 14}
 
     def delete_book(self, book_id):
         """Xóa một cuốn sách khỏi database."""
