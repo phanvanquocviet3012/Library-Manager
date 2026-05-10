@@ -29,7 +29,7 @@ class LibraryManager:
         Được gọi sau mỗi thao tác thay đổi dữ liệu (thêm sách, mượn/trả) 
         để đảm bảo tính đồng nhất của dữ liệu.
         """
-        self.db.save(self.books, self.readers, self.transactions, self.settings)
+        self.db.save_all(self.books, self.readers, self.transactions, self.settings)
 
     def add_book(self, b_id, title, author, category="Chung"):
         """
@@ -40,9 +40,16 @@ class LibraryManager:
             title (str): Tên sách.
             author (str): Tác giả sách.
             category (str, optional): Thể loại. Mặc định là "Chung".
+
+        Returns:
+            tuple: (bool, str) - Thành công/thất bại và thông báo.
         """
+        if b_id in self.books:
+            return False, f"Mã sách '{b_id}' đã tồn tại trong hệ thống!"
+        
         self.books[b_id] = Book(b_id, title, author, category)
         self.save_all()
+        return True, "Đã thêm sách vào kho."
 
     def add_reader(self, r_id, name, contact):
         """
@@ -52,9 +59,16 @@ class LibraryManager:
             r_id (str): Mã định danh duy nhất của độc giả.
             name (str): Họ và tên độc giả.
             contact (str): Thông tin liên lạc (SĐT/Email).
+
+        Returns:
+            tuple: (bool, str) - Thành công/thất bại và thông báo.
         """
+        if r_id in self.readers:
+            return False, f"Mã độc giả '{r_id}' đã tồn tại trong hệ thống!"
+        
         self.readers[r_id] = Reader(r_id, name, contact, max_books=self.settings["max_books"])
         self.save_all()
+        return True, "Đã đăng ký độc giả mới."
 
     def search_books(self, kw):
         """
@@ -94,19 +108,19 @@ class LibraryManager:
             b_id (str): Mã sách.
 
         Returns:
-            str: Thông báo kết quả mượn sách thành công (kèm hạn trả) hoặc lỗi.
+            tuple: (bool, str) - Thành công/thất bại và thông báo.
         """
         reader, book = self.readers.get(r_id), self.books.get(b_id)
-        if not reader or not book: return "❌ Sai mã độc giả hoặc sách."
-        if book.is_borrowed: return "❌ Sách đã có người mượn."
-        if not reader.can_borrow(): return "❌ Đạt giới hạn mượn."
+        if not reader or not book: return False, "Sai mã độc giả hoặc sách."
+        if book.is_borrowed: return False, "Sách đã có người mượn."
+        if not reader.can_borrow(): return False, "Đạt giới hạn mượn."
 
         due = datetime.date.today() + datetime.timedelta(days=self.borrow_days)
         book.is_borrowed, book.due_date, book.borrower_id = True, str(due), r_id
         reader.currently_borrowed += 1
         self.transactions.append(Transaction(r_id, b_id, "MƯỢN"))
         self.save_all()
-        return f"✅ Thành công! Hạn trả: {due}"
+        return True, f"Thành công! Hạn trả: {due}"
 
     def return_book(self, r_id, b_id):
         """
@@ -146,37 +160,39 @@ class LibraryManager:
             b_ids_list (list): Danh sách các chuỗi mã ID sách.
 
         Returns:
-            str: Chuỗi văn bản chi tiết kết quả cho từng mã sách đầu vào.
+            tuple: (bool, str) - Thành công/thất bại và thông báo chi tiết.
         """
         results = []
         reader = self.readers.get(r_id)
         
         if not reader:
-            return "❌ Mã độc giả không tồn tại."
+            return False, "Mã độc giả không tồn tại."
 
+        has_success = False
         for b_id in b_ids_list:
             b_id = b_id.strip()
             book = self.books.get(b_id)
             
             if not book:
-                results.append(f"❓ {b_id}: Không tìm thấy")
+                results.append(f"{b_id}: Không tìm thấy")
                 continue
             if book.is_borrowed:
-                results.append(f"❌ {b_id}: Đã có người mượn")
+                results.append(f"{b_id}: Đã có người mượn")
                 continue
             if not reader.can_borrow():
-                results.append(f"🚫 {b_id}: Đã đạt giới hạn mượn")
+                results.append(f"{b_id}: Đã đạt giới hạn mượn")
                 break # Dừng vì độc giả không mượn thêm được nữa
             
             # Tiến hành mượn
-            due = datetime.date.today() + datetime.timedelta(days=self.borrow_days                                                                                                              )
+            due = datetime.date.today() + datetime.timedelta(days=self.borrow_days)
             book.is_borrowed, book.due_date, book.borrower_id = True, str(due), r_id
             reader.currently_borrowed += 1
             self.transactions.append(Transaction(r_id, b_id, "MƯỢN"))
-            results.append(f"✅ {book.title}: OK")
+            results.append(f"{book.title}: Thành công")
+            has_success = True
 
         self.save_all()
-        return "\n".join(results)
+        return has_success, "\n".join(results)
 
     def return_multiple_books(self, r_id, b_ids_list):
         """
@@ -221,7 +237,7 @@ class LibraryManager:
         self.borrow_days = borrow_days
         for r in self.readers.values(): r.max_books = max_b
         self.save_all()
-        return "✅ Đã cập nhật hệ thống."
+        return True, "Đã cập nhật hệ thống."
 
     def delete_book(self, b_id):
         """Xóa sách khỏi hệ thống nếu sách chưa bị mượn."""
@@ -246,3 +262,121 @@ class LibraryManager:
         del self.readers[r_id] # Xóa khỏi bộ nhớ
         self.db.delete_reader(r_id) # Xóa khỏi database SQLite
         return True, "Xóa độc giả thành công."
+
+    def edit_book(self, b_id, new_title, new_author, new_category):
+        """
+        Cập nhật thông tin của một cuốn sách đã tồn tại.
+
+        Chỉ cho phép sửa tên sách, tác giả và thể loại. Mã sách (ID) không thể thay đổi.
+
+        Args:
+            b_id (str): Mã sách cần sửa.
+            new_title (str): Tên sách mới.
+            new_author (str): Tác giả mới.
+            new_category (str): Thể loại mới.
+
+        Returns:
+            tuple: (bool, str) - Thành công/thất bại và thông báo.
+        """
+        book = self.books.get(b_id)
+        if not book:
+            return False, "Không tìm thấy sách."
+        
+        book.title = new_title
+        book.author = new_author
+        book.category = new_category
+        self.db.save_book(book)
+        return True, "Cập nhật thông tin sách thành công."
+
+    def edit_reader(self, r_id, new_name, new_contact):
+        """
+        Cập nhật thông tin của một độc giả đã tồn tại.
+
+        Chỉ cho phép sửa họ tên và thông tin liên lạc. Mã độc giả (ID) không thể thay đổi.
+
+        Args:
+            r_id (str): Mã độc giả cần sửa.
+            new_name (str): Họ tên mới.
+            new_contact (str): Thông tin liên lạc mới.
+
+        Returns:
+            tuple: (bool, str) - Thành công/thất bại và thông báo.
+        """
+        reader = self.readers.get(r_id)
+        if not reader:
+            return False, "Không tìm thấy độc giả."
+        
+        reader.name = new_name
+        reader.contact = new_contact
+        self.db.save_reader(reader)
+        return True, "Cập nhật thông tin độc giả thành công."
+
+    def cancel_transaction(self, reader_id, book_id, action, timestamp):
+        """
+        Hủy một giao dịch và hoàn tác trạng thái sách/độc giả.
+
+        Giao dịch không bị xóa khỏi database mà chỉ được đánh dấu là đã hủy.
+        - Nếu hủy giao dịch MƯỢN: trả sách về trạng thái sẵn có, giảm số sách đang mượn.
+        - Nếu hủy giao dịch TRẢ: đặt sách về trạng thái đã mượn, tăng số sách đang mượn.
+
+        Args:
+            reader_id (str): Mã độc giả.
+            book_id (str): Mã sách.
+            action (str): Loại giao dịch ("MƯỢN" hoặc "TRẢ").
+            timestamp (str): Thời gian giao dịch.
+
+        Returns:
+            tuple: (bool, str) - Thành công/thất bại và thông báo.
+        """
+        # Tìm giao dịch trong danh sách bộ nhớ
+        target = None
+        for t in self.transactions:
+            if t.reader_id == reader_id and t.book_id == book_id and t.timestamp == timestamp:
+                target = t
+                break
+        
+        if not target:
+            return False, "Không tìm thấy giao dịch."
+        
+        if target.cancelled:
+            return False, "Giao dịch này đã được hủy trước đó."
+
+        book = self.books.get(book_id)
+        reader = self.readers.get(reader_id)
+
+        if action == "MƯỢN":
+            # Hoàn tác mượn: trả sách về kho
+            if book and book.is_borrowed and book.borrower_id == reader_id:
+                book.is_borrowed, book.due_date, book.borrower_id = False, None, None
+                self.db.save_book(book)
+            if reader and reader.currently_borrowed > 0:
+                reader.currently_borrowed -= 1
+                self.db.save_reader(reader)
+        elif action == "TRẢ":
+            # Hoàn tác trả: đặt sách về trạng thái đã mượn
+            if book and not book.is_borrowed:
+                due = datetime.date.today() + datetime.timedelta(days=self.borrow_days)
+                book.is_borrowed, book.due_date, book.borrower_id = True, str(due), reader_id
+                self.db.save_book(book)
+            if reader:
+                reader.currently_borrowed += 1
+                self.db.save_reader(reader)
+
+        # Đánh dấu hủy trong bộ nhớ và database (không xóa)
+        target.cancelled = True
+        self.db.cancel_transaction(reader_id, book_id, timestamp)
+        return True, "Đã hủy giao dịch thành công."
+
+    def reset_all(self):
+        """
+        Xóa toàn bộ dữ liệu và khôi phục hệ thống về trạng thái ban đầu.
+
+        Xóa sạch sách, độc giả, giao dịch trong database và bộ nhớ,
+        đồng thời đặt lại các cài đặt về giá trị mặc định.
+        """
+        self.settings = self.db.reset_database()
+        self.books = {}
+        self.readers = {}
+        self.transactions = []
+        self.fine_per_day = self.settings["fine_per_day"]
+        self.borrow_days = self.settings["borrow_days"]

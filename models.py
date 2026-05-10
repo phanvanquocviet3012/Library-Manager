@@ -100,7 +100,7 @@ class Transaction:
     thông tin về người thực hiện, đối tượng sách, các khoản phí phát sinh 
     và thời điểm giao dịch diễn ra.
     """
-    def __init__(self, reader_id, book_id, action, fine=0, timestamp=None):
+    def __init__(self, reader_id, book_id, action, fine=0, timestamp=None, cancelled=False):
         """
         Khởi tạo một đối tượng Transaction mới.
 
@@ -113,12 +113,14 @@ class Transaction:
             timestamp (str, optional): Thời gian thực hiện giao dịch định dạng 
                 "YYYY-MM-DD HH:MM:SS". Nếu không cung cấp, hệ thống sẽ tự động 
                 lấy thời gian hiện tại.
+            cancelled (bool, optional): Đánh dấu giao dịch đã bị hủy. Mặc định là False.
         """
         self.reader_id = reader_id
         self.book_id = book_id
         self.action = action 
         self.fine = fine
         self.timestamp = timestamp or datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.cancelled = cancelled
 
     def to_dict(self):
         """
