@@ -50,7 +50,7 @@
 Dự án được phân lớp rõ ràng, tách biệt hoàn toàn giữa Giao diện và Logic Nghiệp vụ:
 
 * `models.py`: Định nghĩa cấu trúc dữ liệu cơ sở (Book, Reader, Transaction).
-* `dsa_structures.py`: **[Mới]** Các cấu trúc dữ liệu và thuật toán tự cài đặt (DoublyLinkedList, Merge Sort).
+* `dsa_structures.py`: Các cấu trúc dữ liệu và thuật toán tự cài đặt (DoublyLinkedList, Merge Sort).
 * `database_handler.py`: Tầng xử lý dữ liệu (Data Access Layer) giao tiếp với SQLite.
 * `library_manager.py`: Tầng điều phối (Controller) kết hợp logic nghiệp vụ với dữ liệu.
 * `gui.py`: Giao diện người dùng (View) xây dựng bằng thư viện CustomTkinter.
