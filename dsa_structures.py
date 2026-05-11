@@ -120,3 +120,69 @@ def _merge(left, right, key):
     result.extend(right[j:])
     
     return result
+
+def compute_lps_array(pattern):
+    """
+    Tiền xử lý chuỗi mẫu (pattern) để tạo mảng LPS (Longest Prefix Suffix).
+    
+    Args:
+        pattern (str): Chuỗi cần tìm kiếm.
+    Returns:
+        list: Mảng LPS.
+    """
+    length = 0
+    lps = [0] * len(pattern)
+    i = 1
+    
+    while i < len(pattern):
+        if pattern[i] == pattern[length]:
+            length += 1
+            lps[i] = length
+            i += 1
+        else:
+            if length != 0:
+                length = lps[length - 1]
+            else:
+                lps[i] = 0
+                i += 1
+    return lps
+
+def kmp_search(text, pattern):
+    """
+    Thuật toán so khớp chuỗi KMP (Knuth-Morris-Pratt).
+    Độ phức tạp O(N + M).
+    
+    Args:
+        text (str): Chuỗi gốc (ví dụ: tên sách).
+        pattern (str): Chuỗi cần tìm (từ khóa).
+    Returns:
+        bool: True nếu tìm thấy, False nếu không.
+    """
+    if not pattern:
+        return True
+    if not text:
+        return False
+        
+    M = len(pattern)
+    N = len(text)
+    
+    lps = compute_lps_array(pattern)
+    
+    i = 0  # Chỉ số cho text
+    j = 0  # Chỉ số cho pattern
+    
+    while (N - i) >= (M - j):
+        if pattern[j] == text[i]:
+            j += 1
+            i += 1
+            
+        if j == M:
+            return True # Tìm thấy (trong đồ án chỉ cần biết là có tồn tại)
+            # Nếu cần tìm tất cả vị trí: j = lps[j - 1]
+            
+        elif i < N and pattern[j] != text[i]:
+            if j != 0:
+                j = lps[j - 1]
+            else:
+                i += 1
+    return False

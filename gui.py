@@ -2,7 +2,7 @@ import customtkinter as ctk
 from tkinter import ttk, messagebox
 from library_manager import LibraryManager
 import datetime
-from dsa_structures import merge_sort
+from dsa_structures import merge_sort, kmp_search
 
 class LibraryGUI(ctk.CTk):
     """
@@ -345,7 +345,7 @@ class LibraryGUI(ctk.CTk):
         
         elif current_page == "Lịch Sử Giao Dịch":
             for t in self.manager.transactions.reverse_iter():
-                if kw in t.reader_id.lower() or kw in t.book_id.lower():
+                if kmp_search(t.reader_id.lower(), kw) or kmp_search(t.book_id.lower(), kw):
                     fine_str = f"{t.fine:,.0f} đ" if t.fine > 0 else "-"
                     if t.cancelled:
                         action_str = f"❌ ĐÃ HỦY - {t.action}"

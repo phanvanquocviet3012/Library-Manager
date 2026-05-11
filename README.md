@@ -22,6 +22,10 @@
    - **Ứng dụng:** Sắp xếp độ ưu tiên của sách trong bảng hiển thị (Sách quá hạn > Sắp hết hạn > Sẵn có).
    - **Ưu điểm:** Thuật toán chia để trị tự cài đặt, đảm bảo độ phức tạp luôn ở mức tối ưu $O(N \log N)$ (Best/Worst/Average cases) và là một Stable Sort giúp bảo toàn thứ tự tương đối của dữ liệu.
 
+3. **Thuật toán KMP (Knuth-Morris-Pratt):**
+   - **Ứng dụng:** Tìm kiếm sách, độc giả và lịch sử giao dịch (thay thế toán tử `in` của Python).
+   - **Ưu điểm:** So khớp chuỗi con tối ưu $O(N + M)$ bằng cách sử dụng mảng tiền tố (LPS), hạn chế lùi con trỏ như thuật toán Brute-force.
+
 ---
 
 ## 🚀 Tính năng chính

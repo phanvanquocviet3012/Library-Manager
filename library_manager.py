@@ -1,7 +1,7 @@
 import datetime
 from database_handler import DatabaseHandler
 from models import Book, Reader, Transaction
-from dsa_structures import DoublyLinkedList
+from dsa_structures import DoublyLinkedList, kmp_search
 
 class LibraryManager:
     """
@@ -84,7 +84,7 @@ class LibraryManager:
             list: Danh sách các đối tượng Book khớp với từ khóa.
         """
         kw = kw.lower()
-        return [b for b in self.books.values() if kw in b.title.lower() or kw in b.author.lower()]
+        return [b for b in self.books.values() if kmp_search(b.title.lower(), kw) or kmp_search(b.author.lower(), kw)]
     
     def search_readers(self, kw):
         """
@@ -97,7 +97,7 @@ class LibraryManager:
             list: Danh sách các đối tượng Reader khớp với từ khóa.
         """
         kw = kw.lower()
-        return [r for r in self.readers.values() if kw in r.name.lower() or kw in r.reader_id.lower()]
+        return [r for r in self.readers.values() if kmp_search(r.name.lower(), kw) or kmp_search(r.reader_id.lower(), kw)]
 
     def borrow_book(self, r_id, b_id):
         """
