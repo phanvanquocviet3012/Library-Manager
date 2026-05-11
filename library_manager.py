@@ -1,6 +1,7 @@
 import datetime
 from database_handler import DatabaseHandler
 from models import Book, Reader, Transaction
+from dsa_structures import DoublyLinkedList
 
 class LibraryManager:
     """
@@ -18,7 +19,10 @@ class LibraryManager:
         giao dịch và các cấu hình hệ thống từ file lưu trữ.
         """
         self.db = DatabaseHandler()
-        self.books, self.readers, self.transactions, self.settings = self.db.load()
+        self.books, self.readers, trans_list, self.settings = self.db.load()
+        self.transactions = DoublyLinkedList()
+        for t in trans_list:
+            self.transactions.append(t)
         self.fine_per_day = self.settings.get("fine_per_day", 5000)
         self.borrow_days = self.settings.get("borrow_days", 14)
 
@@ -377,6 +381,6 @@ class LibraryManager:
         self.settings = self.db.reset_database()
         self.books = {}
         self.readers = {}
-        self.transactions = []
+        self.transactions = DoublyLinkedList()
         self.fine_per_day = self.settings["fine_per_day"]
         self.borrow_days = self.settings["borrow_days"]

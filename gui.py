@@ -2,6 +2,7 @@ import customtkinter as ctk
 from tkinter import ttk, messagebox
 from library_manager import LibraryManager
 import datetime
+from dsa_structures import merge_sort
 
 class LibraryGUI(ctk.CTk):
     """
@@ -120,6 +121,7 @@ class LibraryGUI(ctk.CTk):
         btn_frame.pack(fill="x", pady=10)
         
         def delete_selected_book():
+            """Xử lý sự kiện khi người dùng nhấn nút Xóa Sách Đã Chọn."""
             selected_item = self.tree.selection()
             if not selected_item:
                 messagebox.showwarning("Chú ý", "Vui lòng chọn một cuốn sách trong bảng để xóa!")
@@ -137,6 +139,7 @@ class LibraryGUI(ctk.CTk):
                     messagebox.showerror("Lỗi", msg)
 
         def edit_selected_book():
+            """Mở cửa sổ popup để chỉnh sửa thông tin sách được chọn trong bảng."""
             selected_item = self.tree.selection()
             if not selected_item:
                 messagebox.showwarning("Chú ý", "Vui lòng chọn một cuốn sách trong bảng để sửa!")
@@ -172,6 +175,7 @@ class LibraryGUI(ctk.CTk):
             e_cat.pack(padx=20)
 
             def save_edit():
+                """Lưu lại các thay đổi thông tin sách từ cửa sổ popup."""
                 title = e_title.get().strip()
                 author = e_author.get().strip()
                 cat = e_cat.get().strip()
@@ -222,6 +226,7 @@ class LibraryGUI(ctk.CTk):
         btn_frame.pack(fill="x", pady=10)
         
         def delete_selected_reader():
+            """Xử lý sự kiện khi người dùng nhấn nút Xóa Độc Giả Đã Chọn."""
             selected_item = self.tree.selection()
             if not selected_item:
                 messagebox.showwarning("Chú ý", "Vui lòng chọn một độc giả trong bảng để xóa!")
@@ -239,6 +244,7 @@ class LibraryGUI(ctk.CTk):
                     messagebox.showerror("Lỗi", msg)
 
         def edit_selected_reader():
+            """Mở cửa sổ popup để chỉnh sửa thông tin độc giả được chọn trong bảng."""
             selected_item = self.tree.selection()
             if not selected_item:
                 messagebox.showwarning("Chú ý", "Vui lòng chọn một độc giả trong bảng để sửa!")
@@ -269,6 +275,7 @@ class LibraryGUI(ctk.CTk):
             e_contact.pack(padx=20)
 
             def save_edit():
+                """Lưu lại các thay đổi thông tin độc giả từ cửa sổ popup."""
                 name = e_name.get().strip()
                 contact = e_contact.get().strip()
                 if not name:
@@ -332,7 +339,7 @@ class LibraryGUI(ctk.CTk):
                 processed.append((priority, status, tag, b))
             
             # Sắp xếp để sách quá hạn / sắp hết hạn trồi lên đầu
-            processed.sort(key=lambda x: x[0])
+            processed = merge_sort(processed, key=lambda x: x[0])
             
             for priority, status, tag, b in processed:
                 self.tree.insert("", "end", iid=b.book_id, values=(b.book_id, b.title, b.author, status), tags=(tag,))
@@ -343,7 +350,7 @@ class LibraryGUI(ctk.CTk):
                 self.tree.insert("", "end", iid=r.reader_id, values=(r.reader_id, r.name, f"{r.currently_borrowed}/{r.max_books}"))
         
         elif current_page == "Lịch Sử Giao Dịch":
-            for t in reversed(self.manager.transactions):
+            for t in self.manager.transactions.reverse_iter():
                 if kw in t.reader_id.lower() or kw in t.book_id.lower():
                     fine_str = f"{t.fine:,.0f} đ" if t.fine > 0 else "-"
                     if t.cancelled:
@@ -364,7 +371,7 @@ class LibraryGUI(ctk.CTk):
             processed.append((priority, status, tag, b))
         
         # Sắp xếp dữ liệu dựa vào priority (0, 1, 2, 3)
-        processed.sort(key=lambda x: x[0])
+        processed = merge_sort(processed, key=lambda x: x[0])
         
         for priority, status, tag, b in processed:
             self.tree.insert("", "end", iid=b.book_id, values=(b.book_id, b.title, b.author, status), tags=(tag,))
@@ -406,6 +413,7 @@ class LibraryGUI(ctk.CTk):
         btn_frame.pack(fill="x", pady=10)
 
         def cancel_selected_transaction():
+            """Xử lý sự kiện khi người dùng nhấn nút Hủy Giao Dịch Đã Chọn."""
             selected_item = self.tree.selection()
             if not selected_item:
                 messagebox.showwarning("Chú ý", "Vui lòng chọn một giao dịch trong bảng để hủy!")
@@ -433,8 +441,8 @@ class LibraryGUI(ctk.CTk):
         """Tải dữ liệu giao dịch lên bảng, mới nhất xếp lên đầu."""
         for i in self.tree.get_children(): self.tree.delete(i)
         
-        # Đảo ngược danh sách (reversed) để giao dịch mới nhất lên đầu
-        for t in reversed(self.manager.transactions):
+        # Đảo ngược danh sách (reversed) để giao dịch mới nhất lên đầu bằng hàm của DoublyLinkedList
+        for t in self.manager.transactions.reverse_iter():
             fine_str = f"{t.fine:,.0f} đ" if t.fine > 0 else "-"
             if t.cancelled:
                 action_str = f"❌ ĐÃ HỦY - {t.action}"
@@ -461,6 +469,7 @@ class LibraryGUI(ctk.CTk):
         entries = {}
 
         def save(event=None):
+            """Xử lý sự kiện lưu sách mới vào hệ thống khi nhấn nút hoặc phím Enter."""
             b_id = entries["Mã Sách (ID)"].get().strip()
             title = entries["Tên Sách"].get().strip()
             author = entries["Tác Giả"].get().strip()
@@ -511,6 +520,7 @@ class LibraryGUI(ctk.CTk):
         e_phone = ctk.CTkEntry(form, width=400, height=35); e_phone.pack(pady=5)
 
         def save(event=None):
+            """Xử lý sự kiện lưu thông tin độc giả mới khi nhấn nút hoặc phím Enter."""
             r_id = e_id.get().strip()
             name = e_name.get().strip()
             phone = e_phone.get().strip()
@@ -557,6 +567,7 @@ class LibraryGUI(ctk.CTk):
         e_b = ctk.CTkTextbox(self.content, width=500, height=150); e_b.pack(anchor="w", pady=5)
 
         def go(event=None):
+            """Thực hiện chức năng mượn hàng loạt sách dựa trên ID đầu vào."""
             r_id = e_r.get().strip()
             raw_b_ids = e_b.get("1.0", "end").strip()
             b_ids = [i.strip() for i in raw_b_ids.split(",") if i.strip()]
@@ -581,6 +592,7 @@ class LibraryGUI(ctk.CTk):
         e_r.bind("<Return>", go)
         
         def on_enter_textbox(event):
+            """Xử lý sự kiện phím Enter trong ô Textbox nhập mã sách."""
             go()
             return "break"
         e_b.bind("<Return>", on_enter_textbox)
@@ -609,6 +621,7 @@ class LibraryGUI(ctk.CTk):
         scroll_frame.pack(anchor="w", pady=10)
 
         def find():
+            """Tìm kiếm và liệt kê các cuốn sách mà độc giả đang mượn."""
             for child in scroll_frame.winfo_children(): child.destroy()
             self.return_check_vars.clear()
             r_id = e_r.get().strip()
@@ -627,6 +640,7 @@ class LibraryGUI(ctk.CTk):
         ctk.CTkButton(search_row, text="Kiểm Tra", command=find, width=100).pack(side="left")
 
         def ok():
+            """Thực hiện trả các cuốn sách đã được tick chọn trong danh sách."""
             selected_ids = [b_id for b_id, var in self.return_check_vars.items() if var.get()]
             if not selected_ids:
                 messagebox.showwarning("Chú ý", "Hãy chọn ít nhất một cuốn sách để trả!")
@@ -664,6 +678,7 @@ class LibraryGUI(ctk.CTk):
         e_d.pack(anchor="w", pady=5)
 
         def save():
+            """Lưu cấu hình hệ thống (giới hạn mượn, tiền phạt, số ngày) vào Database."""
             try:
                 max_b = int(e_m.get() or 5)
                 fine = int(e_f.get() or 5000)
@@ -683,6 +698,7 @@ class LibraryGUI(ctk.CTk):
                       text_color="#d32f2f").pack(anchor="w", pady=(30, 5))
         
         def reset():
+            """Hiển thị cảnh báo và thực hiện xóa toàn bộ dữ liệu hệ thống nếu được xác nhận."""
             confirm = messagebox.askyesno("⚠️ Cảnh báo", 
                 "Bạn có chắc chắn muốn XÓA TOÀN BỘ dữ liệu?\n\n"
                 "Thao tác này sẽ xóa tất cả sách, độc giả, giao dịch\n"

@@ -3,19 +3,41 @@ import os
 from models import Book, Reader, Transaction
 
 class DatabaseHandler:
+    """
+    Lớp xử lý tương tác trực tiếp với cơ sở dữ liệu SQLite.
+    
+    Đóng vai trò trung gian giữa bộ nhớ (các model) và file lưu trữ vật lý.
+    Cung cấp các hàm CRUD (Tạo, Đọc, Cập nhật, Xóa) cho sách, độc giả, giao dịch và cài đặt.
+    """
     def __init__(self, db_path="data/library.db"):
+        """
+        Khởi tạo DatabaseHandler và đảm bảo thư mục chứa CSDL tồn tại.
+        
+        Args:
+            db_path (str): Đường dẫn tới file database SQLite.
+        """
         self.db_path = db_path
         os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
         self._create_tables()
 
     def _get_connection(self):
-        """Tạo kết nối tới SQLite và trả về đối tượng connection."""
+        """
+        Tạo kết nối tới SQLite và trả về đối tượng connection.
+        Cấu hình `row_factory` để truy xuất dữ liệu theo dạng dictionary (tên cột).
+        
+        Returns:
+            sqlite3.Connection: Đối tượng kết nối đến DB.
+        """
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row  # Truy xuất dữ liệu theo tên cột
         return conn
 
     def _create_tables(self):
-        """Khởi tạo cấu trúc bảng nếu chưa có, bám sát các thuộc tính trong models.py."""
+        """
+        Khởi tạo cấu trúc bảng nếu chưa có, bám sát các thuộc tính trong models.py.
+        Bao gồm các bảng: books, readers, transactions, settings.
+        Đồng thời xử lý migration (thêm cột) nếu database cũ bị thiếu.
+        """
         with self._get_connection() as conn:
             cursor = conn.cursor()
             
@@ -61,7 +83,12 @@ class DatabaseHandler:
             conn.commit()
 
     def save_book(self, book):
-        """Lưu một cuốn sách vào SQLite."""
+        """
+        Lưu hoặc cập nhật một cuốn sách vào SQLite bằng lệnh REPLACE.
+        
+        Args:
+            book (Book): Đối tượng sách cần lưu.
+        """
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
@@ -72,7 +99,12 @@ class DatabaseHandler:
             conn.commit()
 
     def save_reader(self, reader):
-        """Lưu một độc giả vào SQLite."""
+        """
+        Lưu hoặc cập nhật một độc giả vào SQLite bằng lệnh REPLACE.
+        
+        Args:
+            reader (Reader): Đối tượng độc giả cần lưu.
+        """
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
@@ -82,7 +114,12 @@ class DatabaseHandler:
             conn.commit()
 
     def add_transaction(self, transaction):
-        """Thêm một giao dịch vào SQLite."""
+        """
+        Thêm một giao dịch mới vào SQLite.
+        
+        Args:
+            transaction (Transaction): Đối tượng giao dịch cần thêm.
+        """
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
@@ -93,7 +130,12 @@ class DatabaseHandler:
             conn.commit()
 
     def save_settings(self, settings):
-        """Lưu cài đặt vào SQLite."""
+        """
+        Lưu danh sách cài đặt vào SQLite.
+        
+        Args:
+            settings (dict): Dictionary chứa các cặp key-value cài đặt.
+        """
         with self._get_connection() as conn:
             cursor = conn.cursor()
             for key, value in settings.items():
@@ -101,7 +143,16 @@ class DatabaseHandler:
             conn.commit()
 
     def save_all(self, books, readers, transactions, settings):
-        """Lưu toàn bộ trạng thái dữ liệu vào SQLite."""
+        """
+        Lưu đồng loạt toàn bộ trạng thái dữ liệu (sách, độc giả, giao dịch, cài đặt)
+        từ bộ nhớ vào SQLite để đảm bảo đồng bộ hóa.
+        
+        Args:
+            books (dict): Từ điển chứa các đối tượng Book.
+            readers (dict): Từ điển chứa các đối tượng Reader.
+            transactions (DoublyLinkedList hoặc iterable): Danh sách các đối tượng Transaction.
+            settings (dict): Từ điển các cài đặt.
+        """
         with self._get_connection() as conn:
             cursor = conn.cursor()
             
@@ -136,7 +187,13 @@ class DatabaseHandler:
             conn.commit()
 
     def load(self):
-        """Đọc dữ liệu từ SQLite và khởi tạo lại các object Python."""
+        """
+        Đọc dữ liệu từ SQLite và khởi tạo lại các object Python (Book, Reader, Transaction).
+        
+        Returns:
+            tuple: (books, readers, transactions_list, settings) chứa dữ liệu đã tải.
+                   Nếu có lỗi hoặc database trống, trả về giá trị mặc định.
+        """
         try:
             with self._get_connection() as conn:
                 cursor = conn.cursor()
@@ -177,14 +234,24 @@ class DatabaseHandler:
             return {}, {}, [], {"max_books": 5, "fine_per_day": 5000, "borrow_days": 14}
 
     def delete_book(self, book_id):
-        """Xóa một cuốn sách khỏi database."""
+        """
+        Xóa một cuốn sách khỏi database dựa trên ID.
+        
+        Args:
+            book_id (str): Mã sách cần xóa.
+        """
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("DELETE FROM books WHERE book_id = ?", (book_id,))
             conn.commit()
 
     def delete_reader(self, reader_id):
-        """Xóa một độc giả khỏi database."""
+        """
+        Xóa một độc giả khỏi database dựa trên ID.
+        
+        Args:
+            reader_id (str): Mã độc giả cần xóa.
+        """
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("DELETE FROM readers WHERE reader_id = ?", (reader_id,))
