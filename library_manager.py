@@ -35,7 +35,7 @@ class LibraryManager:
         """
         self.db.save_all(self.books, self.readers, self.transactions, self.settings)
 
-    def add_book(self, b_id, title, author, category="Chung"):
+    def add_book(self, b_id, title, author):
         """
         Thêm một cuốn sách mới vào hệ thống.
 
@@ -43,7 +43,6 @@ class LibraryManager:
             b_id (str): Mã định danh duy nhất của sách.
             title (str): Tên sách.
             author (str): Tác giả sách.
-            category (str, optional): Thể loại. Mặc định là "Chung".
 
         Returns:
             tuple: (bool, str) - Thành công/thất bại và thông báo.
@@ -51,7 +50,7 @@ class LibraryManager:
         if b_id in self.books:
             return False, f"Mã sách '{b_id}' đã tồn tại trong hệ thống!"
         
-        self.books[b_id] = Book(b_id, title, author, category)
+        self.books[b_id] = Book(b_id, title, author)
         self.save_all()
         return True, "Đã thêm sách vào kho."
 
@@ -267,17 +266,16 @@ class LibraryManager:
         self.db.delete_reader(r_id) # Xóa khỏi database SQLite
         return True, "Xóa độc giả thành công."
 
-    def edit_book(self, b_id, new_title, new_author, new_category):
+    def edit_book(self, b_id, new_title, new_author):
         """
         Cập nhật thông tin của một cuốn sách đã tồn tại.
 
-        Chỉ cho phép sửa tên sách, tác giả và thể loại. Mã sách (ID) không thể thay đổi.
+        Chỉ cho phép sửa tên sách, tác giả. Mã sách (ID) không thể thay đổi.
 
         Args:
             b_id (str): Mã sách cần sửa.
             new_title (str): Tên sách mới.
             new_author (str): Tác giả mới.
-            new_category (str): Thể loại mới.
 
         Returns:
             tuple: (bool, str) - Thành công/thất bại và thông báo.
@@ -288,7 +286,6 @@ class LibraryManager:
         
         book.title = new_title
         book.author = new_author
-        book.category = new_category
         self.db.save_book(book)
         return True, "Cập nhật thông tin sách thành công."
 

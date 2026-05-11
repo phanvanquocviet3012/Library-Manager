@@ -7,7 +7,7 @@ class Book:
     Lớp này lưu trữ thông tin cơ bản về sách và theo dõi trạng thái mượn/trả, 
     bao gồm thời hạn trả và người đang giữ sách.
     """
-    def __init__(self, book_id, title, author, category="Chung", is_borrowed=False, due_date=None, borrower_id=None):
+    def __init__(self, book_id, title, author, is_borrowed=False, due_date=None, borrower_id=None):
         """
         Khởi tạo một đối tượng Book mới.
 
@@ -15,7 +15,6 @@ class Book:
             book_id (str): Mã định danh duy nhất (ID) của cuốn sách.
             title (str): Tên hoặc tiêu đề của cuốn sách.
             author (str): Tác giả của cuốn sách.
-            category (str, optional): Thể loại sách. Mặc định là "Chung".
             is_borrowed (bool, optional): Trạng thái mượn của sách. 
                 True nếu đã bị mượn, False nếu còn trong kho. Mặc định là False.
             due_date (str, optional): Ngày đến hạn trả sách (định dạng YYYY-MM-DD). 
@@ -26,7 +25,6 @@ class Book:
         self.book_id = book_id
         self.title = title
         self.author = author
-        self.category = category
         self.is_borrowed = is_borrowed
         self.due_date = due_date
         self.borrower_id = borrower_id

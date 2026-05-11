@@ -46,7 +46,6 @@ class DatabaseHandler:
                                 book_id TEXT PRIMARY KEY, 
                                 title TEXT, 
                                 author TEXT, 
-                                category TEXT,
                                 is_borrowed INTEGER,
                                 due_date TEXT,
                                 borrower_id TEXT)''')
@@ -92,9 +91,9 @@ class DatabaseHandler:
         with self._get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                REPLACE INTO books (book_id, title, author, category, is_borrowed, due_date, borrower_id) 
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, (book.book_id, book.title, book.author, book.category, 
+                REPLACE INTO books (book_id, title, author, is_borrowed, due_date, borrower_id) 
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (book.book_id, book.title, book.author, 
                   int(book.is_borrowed), book.due_date, book.borrower_id))
             conn.commit()
 
@@ -159,9 +158,9 @@ class DatabaseHandler:
             # Lưu Sách
             for book in books.values():
                 cursor.execute("""
-                    REPLACE INTO books (book_id, title, author, category, is_borrowed, due_date, borrower_id) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                """, (book.book_id, book.title, book.author, book.category, 
+                    REPLACE INTO books (book_id, title, author, is_borrowed, due_date, borrower_id) 
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (book.book_id, book.title, book.author, 
                       int(book.is_borrowed), book.due_date, book.borrower_id))
             
             # Lưu Độc giả
@@ -203,6 +202,7 @@ class DatabaseHandler:
                 books = {}
                 for row in cursor.fetchall():
                     row_dict = dict(row)
+                    row_dict.pop('category', None) # Xóa trường category nếu db cũ vẫn còn
                     row_dict['is_borrowed'] = bool(row_dict['is_borrowed']) # Ép kiểu lại thành boolean
                     books[row_dict['book_id']] = Book(**row_dict)
                 

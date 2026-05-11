@@ -169,20 +169,14 @@ class LibraryGUI(ctk.CTk):
             e_author.insert(0, book.author)
             e_author.pack(padx=20)
 
-            ctk.CTkLabel(popup, text="Thể Loại:").pack(anchor="w", padx=20, pady=(10, 2))
-            e_cat = ctk.CTkEntry(popup, width=400, height=35)
-            e_cat.insert(0, book.category)
-            e_cat.pack(padx=20)
-
             def save_edit():
                 """Lưu lại các thay đổi thông tin sách từ cửa sổ popup."""
                 title = e_title.get().strip()
                 author = e_author.get().strip()
-                cat = e_cat.get().strip()
                 if not title:
                     messagebox.showwarning("Thiếu thông tin", "Tên sách không được để trống!", parent=popup)
                     return
-                success, msg = self.manager.edit_book(b_id, title, author, cat)
+                success, msg = self.manager.edit_book(b_id, title, author)
                 if success:
                     messagebox.showinfo("Thành công", msg, parent=popup)
                     popup.destroy()
@@ -457,7 +451,7 @@ class LibraryGUI(ctk.CTk):
         """
         Hiển thị form nhập liệu để thêm sách mới vào kho.
 
-        Bao gồm các trường nhập: ID, Tên, Tác giả, Thể loại và nút lưu dữ liệu.
+        Bao gồm các trường nhập: ID, Tên, Tác giả và nút lưu dữ liệu.
         """
         self.clear_content()
         self.create_header("Thêm Sách Mới")
@@ -465,7 +459,7 @@ class LibraryGUI(ctk.CTk):
         form = ctk.CTkFrame(self.content, fg_color="transparent")
         form.pack(pady=20, anchor="w")
 
-        fields = ["Mã Sách (ID)", "Tên Sách", "Tác Giả", "Thể Loại"]
+        fields = ["Mã Sách (ID)", "Tên Sách", "Tác Giả"]
         entries = {}
 
         def save(event=None):
@@ -473,7 +467,6 @@ class LibraryGUI(ctk.CTk):
             b_id = entries["Mã Sách (ID)"].get().strip()
             title = entries["Tên Sách"].get().strip()
             author = entries["Tác Giả"].get().strip()
-            category = entries["Thể Loại"].get().strip() or "Chung"
 
             if not b_id:
                 messagebox.showwarning("Thiếu thông tin", "Vui lòng nhập Mã Sách!")
@@ -482,7 +475,7 @@ class LibraryGUI(ctk.CTk):
                 messagebox.showwarning("Thiếu thông tin", "Vui lòng nhập Tên Sách!")
                 return
 
-            success, msg = self.manager.add_book(b_id, title, author, category)
+            success, msg = self.manager.add_book(b_id, title, author)
             if success:
                 messagebox.showinfo("Thành công", msg)
                 self.show_books_page()
