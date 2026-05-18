@@ -312,6 +312,33 @@ class LibraryManager:
         self.db.save_reader(reader)
         return True, "Cập nhật thông tin độc giả thành công."
 
+    def delete_transaction(self, reader_id, book_id, timestamp):
+        """
+        Xóa vĩnh viễn một giao dịch khỏi hệ thống.
+
+        Args:
+            reader_id (str): Mã độc giả.
+            book_id (str): Mã sách.
+            timestamp (str): Thời gian giao dịch.
+
+        Returns:
+            tuple: (bool, str) - Thành công/thất bại và thông báo.
+        """
+        target_node = None
+        current = self.transactions.head
+        while current:
+            if current.data.reader_id == reader_id and current.data.book_id == book_id and current.data.timestamp == timestamp:
+                target_node = current
+                break
+            current = current.next
+            
+        if not target_node:
+            return False, "Không tìm thấy giao dịch."
+            
+        self.transactions.remove(target_node) # Xóa node khỏi DoublyLinkedList
+        self.db.delete_transaction(reader_id, book_id, timestamp)
+        return True, "Đã xóa vĩnh viễn giao dịch thành công."
+
     def cancel_transaction(self, reader_id, book_id, action, timestamp):
         """
         Hủy một giao dịch và hoàn tác trạng thái sách/độc giả.

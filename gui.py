@@ -406,6 +406,27 @@ class LibraryGUI(ctk.CTk):
         btn_frame = ctk.CTkFrame(self.content, fg_color="transparent")
         btn_frame.pack(fill="x", pady=10)
 
+        def delete_selected_transaction():
+            """Xử lý sự kiện khi người dùng nhấn nút Xóa Vĩnh Viễn."""
+            selected_item = self.tree.selection()
+            if not selected_item:
+                messagebox.showwarning("Chú ý", "Vui lòng chọn một giao dịch trong bảng để xóa!")
+                return
+            
+            values = self.tree.item(selected_item[0], "values")
+            timestamp, reader_id, book_id, action = values[0], values[1], values[2], values[3]
+
+            confirm = messagebox.askyesno("Xác nhận xóa giao dịch",
+                f"Bạn có chắc chắn muốn xóa vĩnh viễn giao dịch {action} sách {book_id} của độc giả {reader_id}?\n\n"
+                f"Lưu ý: Thao tác này CHỈ xóa khỏi lịch sử, KHÔNG hoàn tác trạng thái sách và độc giả.")
+            if confirm:
+                success, msg = self.manager.delete_transaction(reader_id, book_id, timestamp)
+                if success:
+                    messagebox.showinfo("Thành công", msg)
+                    self.refresh_transactions()
+                else:
+                    messagebox.showerror("Lỗi", msg)
+
         def cancel_selected_transaction():
             """Xử lý sự kiện khi người dùng nhấn nút Hủy Giao Dịch Đã Chọn."""
             selected_item = self.tree.selection()
@@ -430,6 +451,8 @@ class LibraryGUI(ctk.CTk):
 
         ctk.CTkButton(btn_frame, text="↩️ Hủy Giao Dịch Đã Chọn", command=cancel_selected_transaction,
                       fg_color="#e67e22", hover_color="#d35400").pack(side="right")
+        ctk.CTkButton(btn_frame, text="🗑️ Xóa Vĩnh Viễn", command=delete_selected_transaction,
+                      fg_color="#d32f2f", hover_color="#b71c1c").pack(side="right", padx=(0, 15))
 
     def refresh_transactions(self):
         """Tải dữ liệu giao dịch lên bảng, mới nhất xếp lên đầu."""

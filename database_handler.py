@@ -257,6 +257,23 @@ class DatabaseHandler:
             cursor.execute("DELETE FROM readers WHERE reader_id = ?", (reader_id,))
             conn.commit()
 
+    def delete_transaction(self, reader_id, book_id, timestamp):
+        """
+        Xóa vĩnh viễn một giao dịch khỏi database.
+
+        Args:
+            reader_id (str): Mã độc giả.
+            book_id (str): Mã sách.
+            timestamp (str): Thời gian giao dịch.
+        """
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "DELETE FROM transactions WHERE reader_id = ? AND book_id = ? AND timestamp = ?",
+                (reader_id, book_id, timestamp)
+            )
+            conn.commit()
+
     def cancel_transaction(self, reader_id, book_id, timestamp):
         """
         Đánh dấu một giao dịch là đã hủy trong database (không xóa).
